@@ -29,21 +29,27 @@ import (
 )
 
 func main() {
-	queue := pq.NewPriorityQueue[string, int64](pq.MinHeap)
+	// Create a new priority queue
+	queue := pq.New[string, int64](pq.MinHeap)
+
+	// Insert items in the queue
 	queue.Put("apple", 10)
 	queue.Put("banana", 3)
 	queue.Put("pear", 20)
 	queue.Put("orange", 15)
+
+	// Update priority of an item
+	queue.Update("banana", 42)
 
 	for !queue.IsEmpty() {
 		item := queue.Get()
 		fmt.Printf("%s: %d\n", item.Value, item.Priority)
 	}
 	// Output:
-	// banana: 3
 	// apple: 10
 	// orange: 15
 	// pear: 20
+	// banana: 42
 }
 ```
 

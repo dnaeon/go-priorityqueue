@@ -41,7 +41,7 @@ const (
 )
 
 // Item represents an item from the priority queue.
-type Item[T any, V int64 | float64] struct {
+type Item[T comparable, V int64 | float64] struct {
 	// The value associated with the item
 	Value T
 
@@ -55,17 +55,19 @@ type Item[T any, V int64 | float64] struct {
 
 // PriorityQueue is a priority queue implementation based
 // container/heap
-type PriorityQueue[T any, V int64 | float64] struct {
-	items []*Item[T, V]
-	kind  HeapKind
+type PriorityQueue[T comparable, V int64 | float64] struct {
+	items     []*Item[T, V]
+	lookupMap map[T]*Item[T, V]
+	kind      HeapKind
 }
 
-// NewPriorityQueue creates a new priority queue, containing items of
-// type T with priority V.
-func NewPriorityQueue[T any, V int64 | float64](kind HeapKind) *PriorityQueue[T, V] {
+// New creates a new priority queue, containing items of type T with
+// priority V.
+func New[T comparable, V int64 | float64](kind HeapKind) *PriorityQueue[T, V] {
 	pq := &PriorityQueue[T, V]{
-		items: make([]*Item[T, V], 0),
-		kind:  kind,
+		items:     make([]*Item[T, V], 0),
+		lookupMap: make(map[T]*Item[T, V]),
+		kind:      kind,
 	}
 	heap.Init(pq)
 
@@ -114,24 +116,33 @@ func (pq *PriorityQueue[T, V]) Pop() any {
 
 // Put adds a value with the given priority to the priority queue
 func (pq *PriorityQueue[T, V]) Put(value T, priority V) {
-	n := len(pq.items)
 	item := &Item[T, V]{
 		Value:    value,
 		Priority: priority,
-		index:    n,
 	}
-	pq.items = append(pq.items, item)
-	heap.Fix(pq, n)
+	pq.lookupMap[value] = item
+
+	heap.Push(pq, item)
 }
 
 // Get returns the next item from the priority queue
 func (pq *PriorityQueue[T, V]) Get() *Item[T, V] {
-	item := heap.Pop(pq)
-	return item.(*Item[T, V])
+	item := heap.Pop(pq).(*Item[T, V])
+	delete(pq.lookupMap, item.Value)
+	return item
 }
 
 // IsEmpty returns a boolean indicating whether the priority queue is
 // empty or not
 func (pq *PriorityQueue[T, V]) IsEmpty() bool {
 	return pq.Len() == 0
+}
+
+// Update updates the priority associated with the given value
+func (pq *PriorityQueue[T, V]) Update(value T, priority V) {
+	item, ok := pq.lookupMap[value]
+	if ok {
+		item.Priority = priority
+		heap.Fix(pq, item.index)
+	}
 }
