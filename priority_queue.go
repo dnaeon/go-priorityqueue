@@ -33,10 +33,10 @@ import (
 type HeapKind int
 
 const (
-	// A heap which yields max-value items
+	// A heap which yields min-value items
 	MinHeap HeapKind = iota
 
-	// A heap which yields min-value items
+	// A heap which yields max-value items
 	MaxHeap
 )
 
