@@ -27,6 +27,7 @@ package priorityqueue
 
 import (
 	"container/heap"
+	"sync"
 )
 
 // HeapKind specifies the heap kind - min or max
@@ -56,6 +57,7 @@ type Item[T comparable, V int64 | float64] struct {
 // PriorityQueue is a priority queue implementation based
 // container/heap
 type PriorityQueue[T comparable, V int64 | float64] struct {
+	sync.Mutex
 	items     []*Item[T, V]
 	lookupMap map[T]*Item[T, V]
 	kind      HeapKind
@@ -75,12 +77,12 @@ func New[T comparable, V int64 | float64](kind HeapKind) *PriorityQueue[T, V] {
 }
 
 // Len implements sort.Interface
-func (pq PriorityQueue[T, V]) Len() int {
+func (pq *PriorityQueue[T, V]) Len() int {
 	return len(pq.items)
 }
 
 // Less implements sort.Interface
-func (pq PriorityQueue[T, V]) Less(i, j int) bool {
+func (pq *PriorityQueue[T, V]) Less(i, j int) bool {
 	if pq.kind == MinHeap {
 		return pq.items[i].Priority < pq.items[j].Priority
 	}
@@ -89,7 +91,7 @@ func (pq PriorityQueue[T, V]) Less(i, j int) bool {
 }
 
 // Swap implements sort.Interface
-func (pq PriorityQueue[T, V]) Swap(i, j int) {
+func (pq *PriorityQueue[T, V]) Swap(i, j int) {
 	pq.items[i], pq.items[j] = pq.items[j], pq.items[i]
 	pq.items[i].index = i
 	pq.items[j].index = j
@@ -116,6 +118,8 @@ func (pq *PriorityQueue[T, V]) Pop() any {
 
 // Put adds a value with the given priority to the priority queue
 func (pq *PriorityQueue[T, V]) Put(value T, priority V) {
+	pq.Lock()
+	defer pq.Unlock()
 	item := &Item[T, V]{
 		Value:    value,
 		Priority: priority,
@@ -127,6 +131,8 @@ func (pq *PriorityQueue[T, V]) Put(value T, priority V) {
 
 // Get returns the next item from the priority queue
 func (pq *PriorityQueue[T, V]) Get() *Item[T, V] {
+	pq.Lock()
+	defer pq.Unlock()
 	item := heap.Pop(pq).(*Item[T, V])
 	delete(pq.lookupMap, item.Value)
 	return item
@@ -135,11 +141,16 @@ func (pq *PriorityQueue[T, V]) Get() *Item[T, V] {
 // IsEmpty returns a boolean indicating whether the priority queue is
 // empty or not
 func (pq *PriorityQueue[T, V]) IsEmpty() bool {
+	pq.Lock()
+	defer pq.Unlock()
 	return pq.Len() == 0
 }
 
 // Update updates the priority associated with the given value
 func (pq *PriorityQueue[T, V]) Update(value T, priority V) {
+	pq.Lock()
+	defer pq.Unlock()
+
 	item, ok := pq.lookupMap[value]
 	if ok {
 		item.Priority = priority
