@@ -9,9 +9,15 @@ A simple, generic implementation of [Priority
 Queue](https://en.wikipedia.org/wiki/Priority_queue), based on
 [container/heap](https://pkg.go.dev/container/heap).
 
+This package is built on top of the functionality already provided by
+`container/heap`, and also adds various convenience methods for
+creating new priority queues, predicates for testing whether the queue
+is empty, synchronization so it can be safely used by multiple
+goroutines.
+
 ## Installation
 
-Executing the following command.
+Execute the following command.
 
 ``` shell
 go get -v gopkg.in/dnaeon/go-priorityqueue.v1
@@ -68,3 +74,8 @@ make test
 
 `go-priorityqueue` is Open Source and licensed under the [BSD
 License](http://opensource.org/licenses/BSD-2-Clause).
+
+## Credits
+
+Some parts of `go-priorityqueue` re-use code from the examples in
+[container/heap](https://pkg.go.dev/container/heap#example-package-PriorityQueue).
